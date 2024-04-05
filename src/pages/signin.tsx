@@ -1,40 +1,26 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/router";
-import "../app/globals.css";
+import { useAuth } from "../app/AuthContext/Auth";
 
-export default function SignIn() {
+interface SignInProps {
+  signIn: ReturnType<typeof useAuth>['signIn']; // Recebendo a função signIn via props
+}
+
+const SignIn: React.FC<SignInProps> = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [authenticated, setAuthenticated] = useState(false);
   const router = useRouter();
 
-  const handleSignIn = async () => {
+  const { signIn } = useAuth();
+
+  const handleSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     try {
-      // Aqui você pode fazer a requisição para sua API Nest.js
-      const response = await fetch("http://localhost:3000/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-      });
-      console.log(response);
+      // Chama a função signIn fornecida via props
+      await signIn(username, password);
 
-      // Verifica se a requisição foi bem-sucedida
-      if (response.ok) {
-        // Define o estado de autenticação como verdadeiro
-        setAuthenticated(true);
-
-        // Redireciona para a página de perfil do usuário e passa o estado de autenticação como uma propriedade
-        router.push({
-          pathname: "/profile",
-          query: { authenticated: true },
-        });
-      } else {
-        // Se ocorrer algum erro, você pode tratar aqui
-        // Por exemplo, exibir uma mensagem de erro para o usuário
-        console.error("Erro ao fazer login:", response.statusText);
-      }
+      // O redirecionamento é tratado dentro do contexto de autenticação,
+      // então não é necessário fazer nada aqui após o login bem-sucedido.
     } catch (error) {
       console.error("Erro ao fazer login:", error);
     }
@@ -43,10 +29,10 @@ export default function SignIn() {
   return (
     <div className="flex flex-col min-h-screen justify-center items-center bg-gradient-to-r from-purple-600 to-blue-600 text-white">
       <h1 className="text-3xl font-semibold mb-4">Faça login na sua conta</h1>
-      <form className="flex flex-col gap-4">
+      <form className="flex flex-col gap-4" onSubmit={handleSignIn}>
         <input
-          type="email"
-          placeholder="E-mail"
+          type="username"
+          placeholder="Usuário"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           className="input-field text-black"
@@ -59,8 +45,7 @@ export default function SignIn() {
           className="input-field text-black"
         />
         <button
-          type="button"
-          onClick={handleSignIn}
+          type="submit"
           className="submit-button"
         >
           Entrar
@@ -68,4 +53,6 @@ export default function SignIn() {
       </form>
     </div>
   );
-}
+};
+
+export default SignIn;
